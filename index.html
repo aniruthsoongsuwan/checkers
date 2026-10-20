@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkers — หมากฮอส</title>
+
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./game.js" defer></script>
+</head>
+
+<body>
+  <main class="game-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-icon">♛</div>
+        <div>
+          <h1>หมากฮอส</h1>
+          <p>CHECKERS • เล่นคนเดียว</p>
+        </div>
+      </div>
+
+      <button id="resetButton" class="reset-button" type="button">
+        ↻ เริ่มเกมใหม่
+      </button>
+    </header>
+
+    <section class="scoreboard" aria-label="คะแนนและสถานะเกม">
+      <div class="player blue-player">
+        <span class="player-dot"></span>
+        <span>คุณ · สีน้ำเงิน</span>
+        <strong id="blueCount">12</strong>
+      </div>
+
+      <div class="turn-box">
+        <span class="turn-label">สถานะเกม</span>
+        <strong id="status">กำลังเริ่มเกม...</strong>
+      </div>
+
+      <div class="player red-player">
+        <strong id="redCount">12</strong>
+        <span>คอม · สีแดง</span>
+        <span class="player-dot"></span>
+      </div>
+    </section>
+
+    <section class="board-wrap">
+      <div id="board" class="board" aria-label="กระดานหมากฮอส"></div>
+    </section>
+
+    <section class="instructions">
+      <p><strong>วิธีเล่น:</strong> แตะหรือคลิกหมากสีน้ำเงิน แล้วเลือกช่องเพื่อเดิน</p>
+      <p>หากกินหมากได้ ระบบจะบังคับให้กิน และถ้ากินต่อได้ ต้องกินต่อด้วยตัวเดิม</p>
+      <p>เดินถึงอีกฝั่งของกระดานจะกลายเป็น <strong>King ♛</strong> เดินถอยหลังได้</p>
+    </section>
+  </main>
+</body>
+</html>
