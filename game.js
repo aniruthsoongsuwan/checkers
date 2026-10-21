@@ -19,14 +19,16 @@
   let computerTimer = null;
   let audioCtx = null;
 
-  // --- ระบบเสียงเอฟเฟกต์ (รองรับการปลดล็อกเสียงบนมือถือ) ---
+  // --- ระบบเสียงเอฟเฟกต์ (บังคับปลดล็อกผ่าน User Interaction) ---
   function initAudio() {
-    if (!audioCtx) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    if (audioCtx.state === 'suspended') {
-      audioCtx.resume();
-    }
+    try {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    } catch (e) {}
   }
 
   function playSound(type) {
@@ -55,16 +57,16 @@
         osc.start();
         osc.stop(audioCtx.currentTime + 0.08);
       } else if (type === 'start') {
-        // เสียงดนตรีต้อนรับตอนเริ่มเกม (เสียงใสๆ รัว 3 โน้ต)
+        // เสียงดนตรีต้อนรับตอนเริ่มเกม (จังหวะรัว 3 โน้ตสดใส)
         const now = audioCtx.currentTime;
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(261.63, now); // Do
-        osc.frequency.setValueAtTime(329.63, now + 0.1); // Mi
-        osc.frequency.setValueAtTime(392.00, now + 0.2); // Sol
-        gain.gain.setValueAtTime(0.2, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+        osc.frequency.setValueAtTime(261.63, now);       // Do
+        osc.frequency.setValueAtTime(329.63, now + 0.12);  // Mi
+        osc.frequency.setValueAtTime(392.00, now + 0.24);  // Sol
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
         osc.start(now);
-        osc.stop(now + 0.4);
+        osc.stop(now + 0.5);
       }
     } catch (e) {}
   }
@@ -132,7 +134,7 @@
 
   function newGame() {
     clearTimeout(computerTimer);
-    initAudio();
+    initAudio(); // ปลดล็อกเสียงทุกครั้งที่เริ่มเกมใหม่
 
     board = createEmptyBoard();
     turn = BLUE;
@@ -158,7 +160,7 @@
 
     setStatus("ตาคุณ · เลือกหมากสีน้ำเงินเพื่อเดิน");
     render();
-    showStartEffect(); // แสดงเสียงและเอฟเฟกต์เด้งต้อนรับตอนเริ่มเกม
+    showStartEffect(); // เรียกเสียงและเอฟเฟกต์ต้อนรับ
   }
 
   function getDirections(piece) {
@@ -568,7 +570,12 @@
     redCountEl.textContent = countPieces(RED);
   }
 
-  resetButton.addEventListener("click", newGame);
+  // ผูกการคลิกปุ่มรีเซ็ตให้กระตุ้นเสียงและปลดล็อก AudioContext ทันทีที่กด
+  resetButton.addEventListener("click", () => {
+    initAudio();
+    newGame();
+  });
 
+  // รันเกมครั้งแรก (เสียงต้อนรับจะดังขึ้นเมื่อผู้เล่นกดปุ่มรีเซ็ตหรือเริ่มกระดานใหม่)
   newGame();
 })();
