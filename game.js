@@ -18,7 +18,7 @@
   let gameOver = false;
   let computerTimer = null;
 
-  // --- ระบบเสียงดนตรีและเอฟเฟกต์ ---
+  // --- ระบบเสียงเอฟเฟกต์ตอนเดินและกินหมาก ---
   function playSound(type) {
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -35,96 +35,16 @@
         gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
         osc.start();
         osc.stop(ctx.currentTime + 0.15);
-      } else if (type === 'start') {
-        const now = ctx.currentTime;
+      } else if (type === 'move') {
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(261.63, now);
-        osc.frequency.setValueAtTime(329.63, now + 0.1);
-        osc.frequency.setValueAtTime(392.00, now + 0.2);
-        gain.gain.setValueAtTime(0.2, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-        osc.start(now);
-        osc.stop(now + 0.4);
-      } else if (type === 'win') {
-        const now = ctx.currentTime;
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(330, now);
-        osc.frequency.setValueAtTime(392, now + 0.15);
-        osc.frequency.setValueAtTime(523, now + 0.3);
-        gain.gain.setValueAtTime(0.2, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
-        osc.start(now);
-        osc.stop(now + 0.6);
+        osc.frequency.setValueAtTime(300, ctx.currentTime);
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.08);
       }
     } catch (e) {}
   }
-
-  // เอฟเฟกต์เป็ดและแรดต้อนรับ
-  function showWelcomeParade() {
-    playSound('start');
-    const oldBox = document.getElementById('paradeBanner');
-    if (oldBox) oldBox.remove();
-
-    const paradeBox = document.createElement('div');
-    paradeBox.id = 'paradeBanner';
-    paradeBox.innerHTML = '🦆 🦏 🎉 เริ่มเกมใหม่แล้ว! สู้ๆ นะครับ';
-    paradeBox.style.position = 'fixed';
-    paradeBox.style.top = '15%';
-    paradeBox.style.left = '50%';
-    paradeBox.style.transform = 'translate(-50%, -50%)';
-    paradeBox.style.background = 'linear-gradient(135deg, #f39c12, #d35400)';
-    paradeBox.style.color = '#fff';
-    paradeBox.style.padding = '12px 25px';
-    paradeBox.style.borderRadius = '30px';
-    paradeBox.style.fontSize = '18px';
-    paradeBox.style.fontWeight = 'bold';
-    paradeBox.style.boxShadow = '0 10px 25px rgba(0,0,0,0.5)';
-    paradeBox.style.zIndex = '1000';
-    paradeBox.style.animation = 'bounceIn 1s ease-out forwards';
-
-    document.body.appendChild(paradeBox);
-    setTimeout(() => {
-      paradeBox.remove();
-    }, 2500);
-  }
-
-  // เอฟเฟกต์เป็ดชูธงตอนจบเกม
-  function showEndGameBanner(message) {
-    playSound('win');
-    const oldBanner = document.getElementById('endGameBanner');
-    if (oldBanner) oldBanner.remove();
-
-    const banner = document.createElement('div');
-    banner.id = 'endGameBanner';
-    banner.innerHTML = `🏆 🦆 🚩 ${message}<br><span style="font-size:16px;">เป็ดชูธงเป็นกำลังใจให้! เยี่ยมมาก!</span>`;
-    banner.style.position = 'fixed';
-    banner.style.top = '30%';
-    banner.style.left = '50%';
-    banner.style.transform = 'translate(-50%, -50%)';
-    banner.style.background = 'linear-gradient(135deg, #27ae60, #2ecc71)';
-    banner.style.color = '#fff';
-    banner.style.padding = '20px 30px';
-    banner.style.borderRadius = '20px';
-    banner.style.fontSize = '20px';
-    banner.style.fontWeight = 'bold';
-    banner.style.boxShadow = '0 15px 30px rgba(0,0,0,0.6)';
-    banner.style.zIndex = '1000';
-    banner.style.textAlign = 'center';
-    banner.style.animation = 'bounceIn 1s ease-out forwards';
-
-    document.body.appendChild(banner);
-  }
-
-  const styleSheet = document.createElement("style");
-  styleSheet.innerText = `
-@keyframes bounceIn {
-    0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
-    50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
-    70% { transform: translate(-50%, -50%) scale(0.95); }
-    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-}`;
-  document.head.appendChild(styleSheet);
-  // ---------------------------------
 
   function isDarkSquare(row, col) {
     return (row + col) % 2 === 1;
@@ -173,7 +93,6 @@
 
     setStatus("ตาคุณ · เลือกหมากสีน้ำเงินเพื่อเดิน");
     render();
-    showWelcomeParade(); // แสดงเป็ดแรดต้อนรับเมื่อเริ่มเกม
   }
 
   function getDirections(piece) {
@@ -283,6 +202,8 @@
     if (move.capture) {
       board[move.capture.row][move.capture.col] = null;
       playSound('capture');
+    } else {
+      playSound('move');
     }
 
     if (piece.color === BLUE && move.to.row === 0) {
@@ -300,7 +221,6 @@
     forcedPiece = null;
     setStatus(message);
     render();
-    showEndGameBanner(message);
   }
 
   function switchTurn() {
@@ -333,8 +253,8 @@
     render();
 
     if (turn === RED) {
-      setStatus("คอมพิวเตอร์กำลังคิด...");
-      computerTimer = setTimeout(computerMove, 600);
+      setStatus("คอมพิวเตอร์กำลังคิดแผน...");
+      computerTimer = setTimeout(computerMove, 500);
     } else {
       const mustCapture = availableMoves.some(move => move.capture);
       setStatus(
@@ -393,7 +313,7 @@
       );
 
       if (!movesForPiece.length) {
-        setStatus("หมากตัวนี้เดินไปไม่ได้");
+        setStatus("หมากตัวนี้เดินไม่ได้");
         return;
       }
 
@@ -409,55 +329,82 @@
     }
   }
 
-  // --- ปรับปรุง AI ให้ฉลาดขึ้น (เดินรุกค้ำ, ป้องกันตัว, และชิงตำแหน่งฮอส) ---
-  function scoreComputerMove(move) {
-    let score = Math.random() * 5; // สุ่มเล็กน้อยไม่ให้ซ้ำซาก
+  // --- สมองกล AI ระดับอัจฉริยะ (Smart AI Evaluation) ---
+  function evaluateBoard() {
+    let score = 0;
+    for (let r = 0; r < SIZE; r++) {
+      for (let c = 0; c < SIZE; c++) {
+        const p = board[r][c];
+        if (!p) continue;
+        
+        let val = 10;
+        if (p.king) val = 25; // ให้คุณค่าหมากฮอสสูงมาก
 
-    // ให้ความสำคัญสูงสุดกับการกินหมาก
-    if (move.capture) {
-      score += 200;
-      // ถ้ากินแล้วได้เป็นฮอส หรือกินหมาก King ฝ่ายตรงข้าม ให้คะแนนเพิ่มพิเศษ
-      if (board[move.capture.row][move.capture.col].king) {
-        score += 80;
+        // AI (RED) เดินหน้าลงล่าง ยิ่งแถวเยอะยิ่งได้เปรียบ (เข้าใกล้ฮอส)
+        if (p.color === RED) {
+          score += val + (r * 1.5);
+        } else {
+          score -= val + ((7 - r) * 1.5);
+        }
       }
     }
+    return score;
+  }
 
-    // ชอบเดินไปข้างหน้าเพื่อดันไปเป็น King (ยิ่งแถวเลขมากยิ่งใกล้ฝั่งเรา)
-    score += move.to.row * 15;
+  function scoreComputerMove(move) {
+    let score = 0;
 
-    // ชอบครองพื้นที่ตรงกลางกระดาน (คอลัมน์ 2 ถึง 5) เพื่อคุมเกม
-    if (move.to.col >= 2 && move.to.col <= 5) {
-      score += 15;
-    }
-
-    // ป้องกันตัว: หลีกเลี่ยงการเดินไปให้ผู้เล่นกิน (เช็คว่าเดินไปแล้วโดนสวนกลับไหม)
-    // จำลองการเดินชั่วคราวเพื่อเช็คความปลอดภัย
+    // จำลองการเดินจริงบนกระดานชั่วคราว
+    const fromPiece = board[move.from.row][move.from.col];
     const targetPiece = board[move.to.row][move.to.col];
-    board[move.to.row][move.to.col] = board[move.from.row][move.from.col];
+    let capturedPiece = null;
+
+    board[move.to.row][move.to.col] = fromPiece;
     board[move.from.row][move.from.col] = null;
 
-    let safe = true;
-    // ตรวจสอบว่าตาต่อไปผู้เล่นสามารถกินหมากตัวนี้คืนได้ทันทีหรือไม่
+    if (move.capture) {
+      capturedPiece = board[move.capture.row][move.capture.col];
+      board[move.capture.row][move.capture.col] = null;
+      score += 150; // ให้คะแนนสูงมากเมื่อมีการกินหมาก
+      if (capturedPiece && capturedPiece.king) score += 50; // โบนัสกินฮอสผู้เล่น
+    }
+
+    // ถ้าเดินแล้วได้เป็นฮอส รับโบนัสทันที
+    if (!fromPiece.king && move.to.row === SIZE - 1) {
+      score += 80;
+    }
+
+    // คุมพื้นที่ตรงกลางกระดาน
+    if (move.to.col >= 2 && move.to.col <= 5) {
+      score += 10;
+    }
+
+    // เช็คความปลอดภัยหลังเดิน: ตาต่อไปผู้เล่นจะกินคืนได้ไหม?
+    let unsafe = false;
     outer: for (let r = 0; r < SIZE; r++) {
       for (let c = 0; c < SIZE; c++) {
         if (board[r][c]?.color === BLUE) {
-          const enemyMoves = getPieceMoves(r, c, true);
-          if (enemyMoves.some(em => em.capture.row === move.to.row && em.capture.col === move.to.col)) {
-            safe = false;
+          const enemyCaptures = getPieceMoves(r, c, true);
+          if (enemyCaptures.some(ec => ec.capture.row === move.to.row && ec.capture.col === move.to.col)) {
+            unsafe = true;
             break outer;
           }
         }
       }
     }
 
-    // คืนค่ากระดานจำลอง
-    board[move.from.row][move.from.col] = board[move.to.row][move.to.col];
-    board[move.to.row][move.to.col] = targetPiece;
+    if (unsafe && !move.capture) {
+      score -= 120; // ลงโทษหนักถ้าเดินไปให้เขากินฟรีโดยไม่ได้กินกลับ
+    }
 
-    if (!safe && !move.capture) {
-      score -= 100; // ตัดคะแนนถ้าเดินไปให้เขากินฟรี
-    } else if (safe) {
-      score += 25; // โบนัสถ้าเดินแล้วปลอดภัย
+    // ประเมินภาพรวมกระดานคร่าวๆ เพิ่มเติม
+    score += evaluateBoard() * 0.5;
+
+    // คืนค่ากระดานกลับเหมือนเดิม
+    board[move.from.row][move.from.col] = fromPiece;
+    board[move.to.row][move.to.col] = targetPiece;
+    if (move.capture) {
+      board[move.capture.row][move.capture.col] = capturedPiece;
     }
 
     return score;
@@ -473,22 +420,25 @@
       return;
     }
 
-    // เลือกตาเดินที่ดีที่สุดตามคะแนน AI ที่ปรับใหม่
+    // จัดลำดับตาเดินตามคะแนนความฉลาด
     const scoredMoves = moves.map(item => ({ item, score: scoreComputerMove(item) }));
     scoredMoves.sort((a, b) => b.score - a.score);
 
-    const move = scoredMoves[0].item;
+    // เลือกตาเดินที่ดีที่สุด (หากคะแนนเท่ากันสุ่มเลือกนิดหน่อยเพื่อความหลากหลาย)
+    const bestScore = scoredMoves[0].score;
+    const bestMoves = scoredMoves.filter(m => Math.abs(m.score - bestScore) < 5);
+    const chosen = bestMoves[Math.floor(Math.random() * bestMoves.length)].item;
 
-    makeMove(move);
+    makeMove(chosen);
     render();
 
-    if (move.capture) {
+    if (chosen.capture) {
       computerTimer = setTimeout(
-        () => computerContinueCapture(move.to),
-        420
+        () => computerContinueCapture(chosen.to),
+        400
       );
     } else {
-      computerTimer = setTimeout(switchTurn, 380);
+      computerTimer = setTimeout(switchTurn, 350);
     }
   }
 
@@ -510,7 +460,7 @@
 
     computerTimer = setTimeout(
       () => computerContinueCapture(move.to),
-      420
+      400
     );
   }
 
@@ -564,6 +514,5 @@
 
   resetButton.addEventListener("click", newGame);
 
-  // เริ่มต้นเกมครั้งแรก (สามารถกดปุ่มรีเซ็ตเพื่อดูเอฟเฟกต์ต้อนรับได้ทันที)
   newGame();
 })();
