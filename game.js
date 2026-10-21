@@ -18,7 +18,7 @@
   let gameOver = false;
   let computerTimer = null;
 
-  // --- ระบบเสียงและเอฟเฟกต์เป็ดตาย ---
+  // --- ระบบเสียงดนตรีและเอฟเฟกต์ ---
   function playSound(type) {
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -35,36 +35,88 @@
         gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
         osc.start();
         osc.stop(ctx.currentTime + 0.15);
+      } else if (type === 'start') {
+        // เสียงดนตรีต้อนรับเริ่มเกม (เสียงใสๆ รัว 3 โน้ต)
+        const now = ctx.currentTime;
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(261.63, now); // โน้ต Do
+        osc.frequency.setValueAtTime(329.63, now + 0.1); // โน้ต Mi
+        osc.frequency.setValueAtTime(392.00, now + 0.2); // โน้ต Sol
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+        osc.start(now);
+        osc.stop(now + 0.4);
+      } else if (type === 'win') {
+        // เสียงชัยชนะตอนจบเกม
+        const now = ctx.currentTime;
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(330, now);
+        osc.frequency.setValueAtTime(392, now + 0.15);
+        osc.frequency.setValueAtTime(523, now + 0.3);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+        osc.start(now);
+        osc.stop(now + 0.6);
       }
     } catch (e) {}
   }
 
-  function showDeadDuckEffect(row, col) {
-    // ค้นหาช่องจาก data-row และ data-col โดยตรง แม่นยำที่สุด
-    const squareElement = boardEl.querySelector(`[data-row='${row}'][data-col='${col}']`);
-    if (!squareElement) return;
+  // เอฟเฟกต์พาเหรดต้อนรับก่อนเริ่มเกม (เป็ดเดินปรบมือ + เสียงต้อนรับ)
+  function showWelcomeParade() {
+    playSound('start');
+    const paradeBox = document.createElement('div');
+    paradeBox.innerHTML = '🦆 🦏 🎉 ยินดีต้อนรับสู่เกมหมากฮอส!';
+    paradeBox.style.position = 'fixed';
+    paradeBox.style.top = '20%';
+    paradeBox.style.left = '50%';
+    paradeBox.style.transform = 'translate(-50%, -50%)';
+    paradeBox.style.background = 'linear-gradient(135deg, #f39c12, #d35400)';
+    paradeBox.style.color = '#fff';
+    paradeBox.style.padding = '15px 30px';
+    paradeBox.style.borderRadius = '30px';
+    paradeBox.style.fontSize = '20px';
+    paradeBox.style.fontWeight = 'bold';
+    paradeBox.style.boxShadow = '0 10px 25px rgba(0,0,0,0.5)';
+    paradeBox.style.zIndex = '1000';
+    paradeBox.style.animation = 'bounceIn 1.5s ease-out forwards';
 
-    const deadPopup = document.createElement('div');
-    deadPopup.innerHTML = '🦆💤';
-    deadPopup.style.position = 'absolute';
-    deadPopup.style.fontSize = '32px';
-    deadPopup.style.zIndex = '20';
-    deadPopup.style.pointerEvents = 'none';
-    deadPopup.style.animation = 'fadeUp 0.9s ease-out forwards';
-    
-    squareElement.appendChild(deadPopup);
+    document.body.appendChild(paradeBox);
     setTimeout(() => {
-      deadPopup.remove();
-    }, 900);
+      paradeBox.remove();
+    }, 2000);
   }
 
-  // ฉีด CSS Animation สำหรับเป็ดตายเข้าหน้าเว็บ
+  // เอฟเฟกต์เป็ดชูธงสู้ๆ ตอนจบเกม
+  function showEndGameBanner(message) {
+    playSound('win');
+    const banner = document.createElement('div');
+    banner.innerHTML = `🏆 🦆 🚩 ${message} สู้ๆ เยี่ยมมาก!`;
+    banner.style.position = 'fixed';
+    banner.style.top = '30%';
+    banner.style.left = '50%';
+    banner.style.transform = 'translate(-50%, -50%)';
+    banner.style.background = 'linear-gradient(135deg, #27ae60, #2ecc71)';
+    banner.style.color = '#fff';
+    banner.style.padding = '20px 35px';
+    banner.style.borderRadius = '20px';
+    banner.style.fontSize = '22px';
+    banner.style.fontWeight = 'bold';
+    banner.style.boxShadow = '0 15px 30px rgba(0,0,0,0.6)';
+    banner.style.zIndex = '1000';
+    banner.style.textAlign = 'center';
+    banner.style.animation = 'bounceIn 1s ease-out forwards';
+
+    document.body.appendChild(banner);
+  }
+
+  // ฉีด CSS Animation สำหรับเอฟเฟกต์เด้งไปมา
   const styleSheet = document.createElement("style");
   styleSheet.innerText = `
-@keyframes fadeUp {
-    0% { transform: translateY(0) scale(0.8); opacity: 1; }
-    50% { transform: translateY(-30px) rotate(20deg) scale(1.4); opacity: 1; }
-    100% { transform: translateY(-55px) rotate(40deg) scale(1); opacity: 0; }
+@keyframes bounceIn {
+    0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
+    50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+    70% { transform: translate(-50%, -50%) scale(0.95); }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
 }`;
   document.head.appendChild(styleSheet);
   // ---------------------------------
@@ -116,6 +168,9 @@
 
     setStatus("ตาคุณ · เลือกหมากสีน้ำเงินเพื่อเดิน");
     render();
+    
+    // แสดงขบวนพาเหรดต้อนรับตอนเริ่มเกมใหม่
+    showWelcomeParade();
   }
 
   function getDirections(piece) {
@@ -224,9 +279,7 @@
 
     if (move.capture) {
       board[move.capture.row][move.capture.col] = null;
-      // เล่นเสียงและเรียกเป็ดขึ้นมาตรงพิกัดที่ถูกกินทันที
-      playSound('capture');
-      showDeadDuckEffect(move.capture.row, move.capture.col);
+      playSound('capture'); // เล่นเสียงตอนกินหมากปกติ
     }
 
     if (piece.color === BLUE && move.to.row === 0) {
@@ -244,6 +297,9 @@
     forcedPiece = null;
     setStatus(message);
     render();
+    
+    // แสดงเป็ดชูธงสู้ๆ ตอนจบเกม
+    showEndGameBanner(message);
   }
 
   function switchTurn() {
@@ -423,8 +479,6 @@
 
         square.type = "button";
         square.className = `square ${isDarkSquare(row, col) ? "dark" : "light"}`;
-        
-        // ผูกพิกัด row และ col ไว้กับปุ่มช่องกระดานโดยตรง
         square.dataset.row = row;
         square.dataset.col = col;
 
