@@ -40,7 +40,8 @@
   }
 
   function showDeadDuckEffect(row, col) {
-    const squareElement = boardEl.children[row * SIZE + col];
+    // ค้นหาช่องจาก data-row และ data-col โดยตรง แม่นยำที่สุด
+    const squareElement = boardEl.querySelector(`[data-row='${row}'][data-col='${col}']`);
     if (!squareElement) return;
 
     const deadPopup = document.createElement('div');
@@ -223,7 +224,7 @@
 
     if (move.capture) {
       board[move.capture.row][move.capture.col] = null;
-      // สั่งให้เล่นเสียงและแสดงเป็ดนอนตายตรงช่องที่หมากถูกกิน
+      // เล่นเสียงและเรียกเป็ดขึ้นมาตรงพิกัดที่ถูกกินทันที
       playSound('capture');
       showDeadDuckEffect(move.capture.row, move.capture.col);
     }
@@ -422,6 +423,10 @@
 
         square.type = "button";
         square.className = `square ${isDarkSquare(row, col) ? "dark" : "light"}`;
+        
+        // ผูกพิกัด row และ col ไว้กับปุ่มช่องกระดานโดยตรง
+        square.dataset.row = row;
+        square.dataset.col = col;
 
         if (samePosition(selected, { row, col })) {
           square.classList.add("selected");
