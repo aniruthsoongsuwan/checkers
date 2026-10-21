@@ -36,18 +36,16 @@
         osc.start();
         osc.stop(ctx.currentTime + 0.15);
       } else if (type === 'start') {
-        // เสียงดนตรีต้อนรับเริ่มเกม (เสียงใสๆ รัว 3 โน้ต)
         const now = ctx.currentTime;
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(261.63, now); // โน้ต Do
-        osc.frequency.setValueAtTime(329.63, now + 0.1); // โน้ต Mi
-        osc.frequency.setValueAtTime(392.00, now + 0.2); // โน้ต Sol
+        osc.frequency.setValueAtTime(261.63, now);
+        osc.frequency.setValueAtTime(329.63, now + 0.1);
+        osc.frequency.setValueAtTime(392.00, now + 0.2);
         gain.gain.setValueAtTime(0.2, now);
         gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
         osc.start(now);
         osc.stop(now + 0.4);
       } else if (type === 'win') {
-        // เสียงชัยชนะตอนจบเกม
         const now = ctx.currentTime;
         osc.type = 'square';
         osc.frequency.setValueAtTime(330, now);
@@ -61,45 +59,53 @@
     } catch (e) {}
   }
 
-  // เอฟเฟกต์พาเหรดต้อนรับก่อนเริ่มเกม (เป็ดเดินปรบมือ + เสียงต้อนรับ)
+  // เอฟเฟกต์เป็ดและแรดต้อนรับ
   function showWelcomeParade() {
     playSound('start');
+    const oldBox = document.getElementById('paradeBanner');
+    if (oldBox) oldBox.remove();
+
     const paradeBox = document.createElement('div');
-    paradeBox.innerHTML = '🦆 🦏 🎉 ยินดีต้อนรับสู่เกมหมากฮอส!';
+    paradeBox.id = 'paradeBanner';
+    paradeBox.innerHTML = '🦆 🦏 🎉 เริ่มเกมใหม่แล้ว! สู้ๆ นะครับ';
     paradeBox.style.position = 'fixed';
-    paradeBox.style.top = '20%';
+    paradeBox.style.top = '15%';
     paradeBox.style.left = '50%';
     paradeBox.style.transform = 'translate(-50%, -50%)';
     paradeBox.style.background = 'linear-gradient(135deg, #f39c12, #d35400)';
     paradeBox.style.color = '#fff';
-    paradeBox.style.padding = '15px 30px';
+    paradeBox.style.padding = '12px 25px';
     paradeBox.style.borderRadius = '30px';
-    paradeBox.style.fontSize = '20px';
+    paradeBox.style.fontSize = '18px';
     paradeBox.style.fontWeight = 'bold';
     paradeBox.style.boxShadow = '0 10px 25px rgba(0,0,0,0.5)';
     paradeBox.style.zIndex = '1000';
-    paradeBox.style.animation = 'bounceIn 1.5s ease-out forwards';
+    paradeBox.style.animation = 'bounceIn 1s ease-out forwards';
 
     document.body.appendChild(paradeBox);
     setTimeout(() => {
       paradeBox.remove();
-    }, 2000);
+    }, 2500);
   }
 
-  // เอฟเฟกต์เป็ดชูธงสู้ๆ ตอนจบเกม
+  // เอฟเฟกต์เป็ดชูธงตอนจบเกม
   function showEndGameBanner(message) {
     playSound('win');
+    const oldBanner = document.getElementById('endGameBanner');
+    if (oldBanner) oldBanner.remove();
+
     const banner = document.createElement('div');
-    banner.innerHTML = `🏆 🦆 🚩 ${message} สู้ๆ เยี่ยมมาก!`;
+    banner.id = 'endGameBanner';
+    banner.innerHTML = `🏆 🦆 🚩 ${message}<br><span style="font-size:16px;">เป็ดชูธงเป็นกำลังใจให้! เยี่ยมมาก!</span>`;
     banner.style.position = 'fixed';
     banner.style.top = '30%';
     banner.style.left = '50%';
     banner.style.transform = 'translate(-50%, -50%)';
     banner.style.background = 'linear-gradient(135deg, #27ae60, #2ecc71)';
     banner.style.color = '#fff';
-    banner.style.padding = '20px 35px';
+    banner.style.padding = '20px 30px';
     banner.style.borderRadius = '20px';
-    banner.style.fontSize = '22px';
+    banner.style.fontSize = '20px';
     banner.style.fontWeight = 'bold';
     banner.style.boxShadow = '0 15px 30px rgba(0,0,0,0.6)';
     banner.style.zIndex = '1000';
@@ -109,7 +115,6 @@
     document.body.appendChild(banner);
   }
 
-  // ฉีด CSS Animation สำหรับเอฟเฟกต์เด้งไปมา
   const styleSheet = document.createElement("style");
   styleSheet.innerText = `
 @keyframes bounceIn {
@@ -168,9 +173,7 @@
 
     setStatus("ตาคุณ · เลือกหมากสีน้ำเงินเพื่อเดิน");
     render();
-    
-    // แสดงขบวนพาเหรดต้อนรับตอนเริ่มเกมใหม่
-    showWelcomeParade();
+    showWelcomeParade(); // แสดงเป็ดแรดต้อนรับเมื่อเริ่มเกม
   }
 
   function getDirections(piece) {
@@ -279,7 +282,7 @@
 
     if (move.capture) {
       board[move.capture.row][move.capture.col] = null;
-      playSound('capture'); // เล่นเสียงตอนกินหมากปกติ
+      playSound('capture');
     }
 
     if (piece.color === BLUE && move.to.row === 0) {
@@ -297,8 +300,6 @@
     forcedPiece = null;
     setStatus(message);
     render();
-    
-    // แสดงเป็ดชูธงสู้ๆ ตอนจบเกม
     showEndGameBanner(message);
   }
 
@@ -392,7 +393,7 @@
       );
 
       if (!movesForPiece.length) {
-        setStatus("หมากตัวนี้เดินไม่ได้");
+        setStatus("หมากตัวนี้เดินไปไม่ได้");
         return;
       }
 
@@ -408,12 +409,56 @@
     }
   }
 
+  // --- ปรับปรุง AI ให้ฉลาดขึ้น (เดินรุกค้ำ, ป้องกันตัว, และชิงตำแหน่งฮอส) ---
   function scoreComputerMove(move) {
-    let score = Math.random() * 10;
+    let score = Math.random() * 5; // สุ่มเล็กน้อยไม่ให้ซ้ำซาก
 
-    if (move.capture) score += 100;
-    if (move.to.row === SIZE - 1) score += 30;
-    if (move.to.col >= 2 && move.to.col <= 5) score += 4;
+    // ให้ความสำคัญสูงสุดกับการกินหมาก
+    if (move.capture) {
+      score += 200;
+      // ถ้ากินแล้วได้เป็นฮอส หรือกินหมาก King ฝ่ายตรงข้าม ให้คะแนนเพิ่มพิเศษ
+      if (board[move.capture.row][move.capture.col].king) {
+        score += 80;
+      }
+    }
+
+    // ชอบเดินไปข้างหน้าเพื่อดันไปเป็น King (ยิ่งแถวเลขมากยิ่งใกล้ฝั่งเรา)
+    score += move.to.row * 15;
+
+    // ชอบครองพื้นที่ตรงกลางกระดาน (คอลัมน์ 2 ถึง 5) เพื่อคุมเกม
+    if (move.to.col >= 2 && move.to.col <= 5) {
+      score += 15;
+    }
+
+    // ป้องกันตัว: หลีกเลี่ยงการเดินไปให้ผู้เล่นกิน (เช็คว่าเดินไปแล้วโดนสวนกลับไหม)
+    // จำลองการเดินชั่วคราวเพื่อเช็คความปลอดภัย
+    const targetPiece = board[move.to.row][move.to.col];
+    board[move.to.row][move.to.col] = board[move.from.row][move.from.col];
+    board[move.from.row][move.from.col] = null;
+
+    let safe = true;
+    // ตรวจสอบว่าตาต่อไปผู้เล่นสามารถกินหมากตัวนี้คืนได้ทันทีหรือไม่
+    outer: for (let r = 0; r < SIZE; r++) {
+      for (let c = 0; c < SIZE; c++) {
+        if (board[r][c]?.color === BLUE) {
+          const enemyMoves = getPieceMoves(r, c, true);
+          if (enemyMoves.some(em => em.capture.row === move.to.row && em.capture.col === move.to.col)) {
+            safe = false;
+            break outer;
+          }
+        }
+      }
+    }
+
+    // คืนค่ากระดานจำลอง
+    board[move.from.row][move.from.col] = board[move.to.row][move.to.col];
+    board[move.to.row][move.to.col] = targetPiece;
+
+    if (!safe && !move.capture) {
+      score -= 100; // ตัดคะแนนถ้าเดินไปให้เขากินฟรี
+    } else if (safe) {
+      score += 25; // โบนัสถ้าเดินแล้วปลอดภัย
+    }
 
     return score;
   }
@@ -428,9 +473,11 @@
       return;
     }
 
-    const move = moves
-      .map(item => ({ item, score: scoreComputerMove(item) }))
-      .sort((a, b) => b.score - a.score)[0].item;
+    // เลือกตาเดินที่ดีที่สุดตามคะแนน AI ที่ปรับใหม่
+    const scoredMoves = moves.map(item => ({ item, score: scoreComputerMove(item) }));
+    scoredMoves.sort((a, b) => b.score - a.score);
+
+    const move = scoredMoves[0].item;
 
     makeMove(move);
     render();
@@ -517,5 +564,6 @@
 
   resetButton.addEventListener("click", newGame);
 
+  // เริ่มต้นเกมครั้งแรก (สามารถกดปุ่มรีเซ็ตเพื่อดูเอฟเฟกต์ต้อนรับได้ทันที)
   newGame();
 })();
