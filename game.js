@@ -36,38 +36,41 @@
         osc.start();
         osc.stop(ctx.currentTime + 0.15);
       }
-    } catch (e) {
-      // ป้องกันกรณีเบราว์เซอร์บล็อกเสียงอัตโนมัติ
-    }
+    } catch (e) {}
   }
 
   function showDeadDuckEffect(row, col) {
-    const squares = boardEl.children;
-    const index = row * SIZE + col;
-    const squareElement = squares[index];
+    // ค้นหาช่องกระดานจาก attribute แถวและคอลัมน์ที่เรนเดอร์ไว้
+    const squareElement = boardEl.children[row * SIZE + col];
     if (!squareElement) return;
 
     const deadPopup = document.createElement('div');
     deadPopup.innerHTML = '🦆💤';
     deadPopup.style.position = 'absolute';
-    deadPopup.style.fontSize = '28px';
-    deadPopup.style.zIndex = '10';
+    deadPopup.style.fontSize = '32px';
+    deadPopup.style.zIndex = '20';
     deadPopup.style.pointerEvents = 'none';
-    deadPopup.style.animation = 'fadeUp 0.8s ease-out forwards';
+    deadPopup.style.animation = 'fadeUp 0.9s ease-out forwards';
     
     squareElement.appendChild(deadPopup);
     setTimeout(() => {
       deadPopup.remove();
-    }, 800);
+    }, 900);
   }
 
-  // ฉีด CSS Animation สำหรับเป็ดตายเข้าหน้าเว็บ
+  // ฉีด CSS สำหรับกระดานและอนิเมชันเป็ดตาย
   const styleSheet = document.createElement("style");
   styleSheet.innerText = `
+#board {
+    position: relative;
+}
+.square {
+    position: relative;
+}
 @keyframes fadeUp {
-    0% { transform: translateY(0) scale(1); opacity: 1; }
-    50% { transform: translateY(-20px) rotate(15deg) scale(1.3); opacity: 1; }
-    100% { transform: translateY(-40px) rotate(30deg) scale(0.8); opacity: 0; }
+    0% { transform: translateY(0) scale(0.8); opacity: 1; }
+    50% { transform: translateY(-25px) rotate(15deg) scale(1.4); opacity: 1; }
+    100% { transform: translateY(-45px) rotate(30deg) scale(1); opacity: 0; }
 }`;
   document.head.appendChild(styleSheet);
   // ---------------------------------
@@ -425,10 +428,6 @@
 
         square.type = "button";
         square.className = `square ${isDarkSquare(row, col) ? "dark" : "light"}`;
-        square.setAttribute(
-          "aria-label",
-          `แถว ${row + 1} คอลัมน์ ${col + 1}`
-        );
 
         if (samePosition(selected, { row, col })) {
           square.classList.add("selected");
