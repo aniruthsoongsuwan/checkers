@@ -18,6 +18,60 @@
   let gameOver = false;
   let computerTimer = null;
 
+  // --- ระบบเสียงและเอฟเฟกต์เป็ดตาย ---
+  function playSound(type) {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      if (type === 'capture') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(150, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.15);
+      }
+    } catch (e) {
+      // ป้องกันกรณีเบราว์เซอร์บล็อกเสียงอัตโนมัติ
+    }
+  }
+
+  function showDeadDuckEffect(row, col) {
+    const squares = boardEl.children;
+    const index = row * SIZE + col;
+    const squareElement = squares[index];
+    if (!squareElement) return;
+
+    const deadPopup = document.createElement('div');
+    deadPopup.innerHTML = '🦆💤';
+    deadPopup.style.position = 'absolute';
+    deadPopup.style.fontSize = '28px';
+    deadPopup.style.zIndex = '10';
+    deadPopup.style.pointerEvents = 'none';
+    deadPopup.style.animation = 'fadeUp 0.8s ease-out forwards';
+    
+    squareElement.appendChild(deadPopup);
+    setTimeout(() => {
+      deadPopup.remove();
+    }, 800);
+  }
+
+  // ฉีด CSS Animation สำหรับเป็ดตายเข้าหน้าเว็บ
+  const styleSheet = document.createElement("style");
+  styleSheet.innerText = `
+@keyframes fadeUp {
+    0% { transform: translateY(0) scale(1); opacity: 1; }
+    50% { transform: translateY(-20px) rotate(15deg) scale(1.3); opacity: 1; }
+    100% { transform: translateY(-40px) rotate(30deg) scale(0.8); opacity: 0; }
+}`;
+  document.head.appendChild(styleSheet);
+  // ---------------------------------
+
   function isDarkSquare(row, col) {
     return (row + col) % 2 === 1;
   }
@@ -173,6 +227,8 @@
 
     if (move.capture) {
       board[move.capture.row][move.capture.col] = null;
+      playSound('capture');
+      showDeadDuckEffect(move.capture.row, move.capture.col);
     }
 
     if (piece.color === BLUE && move.to.row === 0) {
@@ -411,56 +467,3 @@
 
   newGame();
 })();
-// --- โค้ดเพิ่มเติมนอกเหนือจากระบบเดิม ---
-
-// ฟังก์ชันสร้างเสียงเอฟเฟกต์ตอนกินหมาก
-function playSound(type) {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    if (type === 'capture') {
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(150, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.15);
-        gain.gain.setValueAtTime(0.3, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.15);
-    } else if (type === 'move') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(300, ctx.currentTime);
-        gain.gain.setValueAtTime(0.1, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.08);
-    }
-}
-
-// ฟังก์ชันแสดงเอฟเฟกต์เป็ดนอนตาย
-function showDeadDuckEffect(squareElement) {
-    if (!squareElement) return;
-    const deadPopup = document.createElement('div');
-    deadPopup.innerHTML = '🦆💤';
-    deadPopup.style.position = 'absolute';
-    deadPopup.style.fontSize = '28px';
-    deadPopup.style.zIndex = '10';
-    deadPopup.style.animation = 'fadeUp 0.8s ease-out forwards';
-    
-    squareElement.appendChild(deadPopup);
-    setTimeout(() => {
-        deadPopup.remove();
-    }, 800);
-}
-
-// CSS Animation สำหรับเป็ดตาย
-const styleSheet = document.createElement("style");
-styleSheet.innerText = `
-@keyframes fadeUp {
-    0% { transform: translateY(0) scale(1); opacity: 1; }
-    50% { transform: translateY(-20px) rotate(15deg) scale(1.3); opacity: 1; }
-    100% { transform: translateY(-40px) rotate(30deg) scale(0.8); opacity: 0; }
-}`;
-document.head.appendChild(styleSheet);
