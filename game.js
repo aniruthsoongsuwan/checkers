@@ -40,7 +40,6 @@
   }
 
   function showDeadDuckEffect(row, col) {
-    // ค้นหาช่องกระดานจาก attribute แถวและคอลัมน์ที่เรนเดอร์ไว้
     const squareElement = boardEl.children[row * SIZE + col];
     if (!squareElement) return;
 
@@ -58,19 +57,13 @@
     }, 900);
   }
 
-  // ฉีด CSS สำหรับกระดานและอนิเมชันเป็ดตาย
+  // ฉีด CSS Animation สำหรับเป็ดตายเข้าหน้าเว็บ
   const styleSheet = document.createElement("style");
   styleSheet.innerText = `
-#board {
-    position: relative;
-}
-.square {
-    position: relative;
-}
 @keyframes fadeUp {
     0% { transform: translateY(0) scale(0.8); opacity: 1; }
-    50% { transform: translateY(-25px) rotate(15deg) scale(1.4); opacity: 1; }
-    100% { transform: translateY(-45px) rotate(30deg) scale(1); opacity: 0; }
+    50% { transform: translateY(-30px) rotate(20deg) scale(1.4); opacity: 1; }
+    100% { transform: translateY(-55px) rotate(40deg) scale(1); opacity: 0; }
 }`;
   document.head.appendChild(styleSheet);
   // ---------------------------------
@@ -230,6 +223,7 @@
 
     if (move.capture) {
       board[move.capture.row][move.capture.col] = null;
+      // สั่งให้เล่นเสียงและแสดงเป็ดนอนตายตรงช่องที่หมากถูกกิน
       playSound('capture');
       showDeadDuckEffect(move.capture.row, move.capture.col);
     }
