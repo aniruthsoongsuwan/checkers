@@ -8,42 +8,49 @@ body {
     background: linear-gradient(135deg, #2c3e50, #1a252f);
     margin: 0;
     color: #fff;
+    padding: 10px;
+    box-sizing: border-box;
 }
 
 h1 {
-    font-size: 1.8rem;
+    font-size: 1.6rem;
     margin-bottom: 5px;
     text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    text-align: center;
 }
 
 #status {
-    margin-bottom: 15px;
+    margin-bottom: 12px;
     font-size: 1.1rem;
-    background: rgba(255, 255, 255, 0.1);
-    padding: 6px 16px;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 8px 18px;
     border-radius: 20px;
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+    text-align: center;
+    font-weight: bold;
 }
 
 .scoreboard {
-    margin-bottom: 15px;
+    margin-bottom: 12px;
     font-weight: bold;
-    font-size: 1rem;
+    font-size: 1.1rem;
 }
 
-/* กรอบกระดานไม้ 3D เสมือนจริง */
+/* กระดานไม้ 3D ปรับขนาดอัตโนมัติตามหน้าจอ (ใหญ่เต็มตาบนมือถือ) */
 #board {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
     grid-template-rows: repeat(8, 1fr);
-    width: 440px;
-    height: 440px;
-    padding: 12px;
+    width: 88vmin;
+    height: 88vmin;
+    max-width: 520px;
+    max-height: 520px;
+    padding: 2.5vmin;
     background: linear-gradient(145deg, #8E5A2F, #5C3A21);
-    border-radius: 8px;
+    border-radius: 12px;
     box-shadow: 0 15px 35px rgba(0,0,0,0.6), inset 0 3px 6px rgba(255,255,255,0.2);
     position: relative;
-    border: 3px solid #3d2514;
+    border: 4px solid #3d2514;
 }
 
 .square {
@@ -54,9 +61,10 @@ h1 {
     border: none;
     outline: none;
     cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
 }
 
-/* ลายไม้ช่องกระดานอ่อนและเข้ม */
+/* ลายไม้ช่องกระดาน */
 .light {
     background-color: #EED9C4;
     box-shadow: inset 0 0 4px rgba(0,0,0,0.1);
@@ -74,30 +82,30 @@ h1 {
 
 .square.valid-move::after {
     content: '';
-    width: 16px;
-    height: 16px;
-    background-color: rgba(46, 204, 113, 0.8);
+    width: 25%;
+    height: 25%;
+    background-color: rgba(46, 204, 113, 0.9);
     border-radius: 50%;
-    box-shadow: 0 0 8px #2ecc71;
+    box-shadow: 0 0 10px #2ecc71;
 }
 
-/* ตัวหมาก 3D นูนมีมิติ */
+/* ตัวหมาก 3D นูนมีมิติ (ขยายให้ใหญ่ขึ้นเพื่อให้มองเห็นชัดเจน) */
 .piece {
-    width: 78%;
-    height: 78%;
+    width: 82%;
+    height: 82%;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
-    box-shadow: 0 6px 10px rgba(0,0,0,0.4), inset 0 4px 6px rgba(255,255,255,0.5), inset 0 -4px 6px rgba(0,0,0,0.4);
+    font-size: 24px;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.5), inset 0 4px 6px rgba(255,255,255,0.5), inset 0 -4px 6px rgba(0,0,0,0.4);
     transition: transform 0.15s ease;
     user-select: none;
     position: relative;
 }
 
-.piece:hover {
-    transform: scale(1.06);
+.piece:active {
+    transform: scale(1.1);
 }
 
 /* หมากน้ำเงิน (ผู้เล่น) */
@@ -107,27 +115,27 @@ h1 {
 }
 
 /* หมากแดง (คอมพิวเตอร์) */
-.piece.piece.red {
+.piece.red {
     background: radial-gradient(circle at 30% 30%, #ff6b6b, #ee5253);
     border: 2px solid #78281f;
 }
 
 .piece.king::before {
     content: '👑';
-    font-size: 16px;
+    font-size: 1.2rem;
     filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5));
 }
 
-/* ปุ่มเริ่มเกมใหม่ */
+/* ปุ่มเริ่มเกมใหม่ขนาดใหญ่ กดง่าย */
 #resetButton {
-    margin-top: 20px;
-    padding: 10px 24px;
-    font-size: 1rem;
+    margin-top: 18px;
+    padding: 12px 28px;
+    font-size: 1.1rem;
     font-weight: bold;
     background-color: #e67e22;
     color: white;
     border: none;
-    border-radius: 25px;
+    border-radius: 30px;
     cursor: pointer;
     box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     transition: background 0.2s, transform 0.1s;
@@ -135,9 +143,4 @@ h1 {
 
 #resetButton:hover {
     background-color: #d35400;
-    transform: translateY(-2px);
-}
-
-#resetButton:active {
-    transform: translateY(0);
 }
