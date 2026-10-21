@@ -1,524 +1,140 @@
-(() => {
-  "use strict";
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #2c3e50, #1a252f);
+    margin: 0;
+    color: #fff;
+    padding: 10px;
+    box-sizing: border-box;
+}
 
-  const boardEl = document.getElementById("board");
-  const statusEl = document.getElementById("status");
-  const blueCountEl = document.getElementById("blueCount");
-  const redCountEl = document.getElementById("redCount");
-  const resetButton = document.getElementById("resetButton");
+h1 {
+    font-size: 1.5rem;
+    margin-bottom: 5px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    text-align: center;
+}
 
-  const SIZE = 8;
-  const BLUE = "blue";
-  const RED = "red";
+#status {
+    margin-bottom: 10px;
+    font-size: 1rem;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 6px 16px;
+    border-radius: 20px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+    text-align: center;
+    font-weight: bold;
+}
 
-  let board = [];
-  let turn = BLUE;
-  let selected = null;
-  let forcedPiece = null;
-  let gameOver = false;
-  let computerTimer = null;
+.scoreboard {
+    margin-bottom: 10px;
+    font-weight: bold;
+    font-size: 1rem;
+}
 
-  // --- ระบบเสียงเอฟเฟกต์ตอนเดินและกินหมาก ---
-  function playSound(type) {
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
+/* ล็อกขนาดกระดานไม้ 3D ไม่ให้เพี้ยนบน iPhone */
+#board {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    width: 86vmin;
+    height: 86vmin;
+    max-width: 440px;
+    max-height: 440px;
+    padding: 10px;
+    background: linear-gradient(145deg, #8E5A2F, #5C3A21);
+    border-radius: 10px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.6), inset 0 3px 6px rgba(255,255,255,0.2);
+    position: relative;
+    border: 4px solid #3d2514;
+    box-sizing: border-box;
+}
 
-      if (type === 'capture') {
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(150, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.15);
-        gain.gain.setValueAtTime(0.3, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.15);
-      } else if (type === 'move') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(300, ctx.currentTime);
-        gain.gain.setValueAtTime(0.1, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.08);
-      }
-    } catch (e) {}
-  }
-
-  // ปรับแต่งสไตล์การแสดงผลของมงกุฎให้พอดีสวยงาม ไม่ดันช่องเพี้ยน
-  const styleSheet = document.createElement("style");
-  styleSheet.innerText = `
-.piece.king {
+.square {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
-    line-height: 1;
+    position: relative;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
 }
-.piece.king::before {
-    content: none !important;
-}`;
-  document.head.appendChild(styleSheet);
-  // ---------------------------------
 
-  function isDarkSquare(row, col) {
-    return (row + col) % 2 === 1;
-  }
-
-  function isInside(row, col) {
-    return row >= 0 && row < SIZE && col >= 0 && col < SIZE;
-  }
-
-  function samePosition(a, b) {
-    return a && b && a.row === b.row && a.col === b.col;
-  }
-
-  function setStatus(message) {
-    statusEl.textContent = message;
-  }
-
-  function createEmptyBoard() {
-    return Array.from({ length: SIZE }, () => Array(SIZE).fill(null));
-  }
-
-  function newGame() {
-    clearTimeout(computerTimer);
-
-    board = createEmptyBoard();
-    turn = BLUE;
-    selected = null;
-    forcedPiece = null;
-    gameOver = false;
-
-    for (let row = 0; row < 3; row++) {
-      for (let col = 0; col < SIZE; col++) {
-        if (isDarkSquare(row, col)) {
-          board[row][col] = { color: RED, king: false };
-        }
-      }
-    }
-
-    for (let row = 5; row < SIZE; row++) {
-      for (let col = 0; col < SIZE; col++) {
-        if (isDarkSquare(row, col)) {
-          board[row][col] = { color: BLUE, king: false };
-        }
-      }
-    }
-
-    setStatus("ตาคุณ · เลือกหมากสีน้ำเงินเพื่อเดิน");
-    render();
-  }
-
-  function getDirections(piece) {
-    if (piece.king) {
-      return [
-        [-1, -1],
-        [-1, 1],
-        [1, -1],
-        [1, 1]
-      ];
-    }
-
-    return piece.color === BLUE
-      ? [[-1, -1], [-1, 1]]
-      : [[1, -1], [1, 1]];
-  }
-
-  function getPieceMoves(row, col, capturesOnly = false) {
-    const piece = board[row][col];
-    if (!piece) return [];
-
-    const moves = [];
-
-    for (const [dr, dc] of getDirections(piece)) {
-      const nextRow = row + dr;
-      const nextCol = col + dc;
-      const jumpRow = row + dr * 2;
-      const jumpCol = col + dc * 2;
-
-      if (
-        isInside(nextRow, nextCol) &&
-        !capturesOnly &&
-        !board[nextRow][nextCol]
-      ) {
-        moves.push({
-          from: { row, col },
-          to: { row: nextRow, col: nextCol },
-          capture: null
-        });
-      }
-
-      if (
-        isInside(nextRow, nextCol) &&
-        isInside(jumpRow, jumpCol) &&
-        board[nextRow][nextCol] &&
-        board[nextRow][nextCol].color !== piece.color &&
-        !board[jumpRow][jumpCol]
-      ) {
-        moves.push({
-          from: { row, col },
-          to: { row: jumpRow, col: jumpCol },
-          capture: { row: nextRow, col: nextCol }
-        });
-      }
-    }
-
-    return moves;
-  }
-
-  function getAllMoves(color) {
-    const normalMoves = [];
-    const captureMoves = [];
-
-    for (let row = 0; row < SIZE; row++) {
-      for (let col = 0; col < SIZE; col++) {
-        const piece = board[row][col];
-        if (!piece || piece.color !== color) continue;
-
-        for (const move of getPieceMoves(row, col)) {
-          if (move.capture) captureMoves.push(move);
-          else normalMoves.push(move);
-        }
-      }
-    }
-
-    return captureMoves.length > 0 ? captureMoves : normalMoves;
-  }
-
-  function getSelectedMoves() {
-    if (!selected) return [];
-
-    return getAllMoves(turn).filter(
-      move =>
-        move.from.row === selected.row &&
-        move.from.col === selected.col
-    );
-  }
-
-  function countPieces(color) {
-    let count = 0;
-
-    for (const row of board) {
-      for (const piece of row) {
-        if (piece?.color === color) count++;
-      }
-    }
-
-    return count;
-  }
-
-  function makeMove(move) {
-    const piece = board[move.from.row][move.from.col];
-
-    board[move.to.row][move.to.col] = piece;
-    board[move.from.row][move.from.col] = null;
-
-    if (move.capture) {
-      board[move.capture.row][move.capture.col] = null;
-      playSound('capture');
-    } else {
-      playSound('move');
-    }
-
-    if (piece.color === BLUE && move.to.row === 0) {
-      piece.king = true;
-    }
-
-    if (piece.color === RED && move.to.row === SIZE - 1) {
-      piece.king = true;
-    }
-  }
-
-  function finishGame(message) {
-    gameOver = true;
-    selected = null;
-    forcedPiece = null;
-    setStatus(message);
-    render();
-  }
-
-  function switchTurn() {
-    selected = null;
-    forcedPiece = null;
-
-    if (countPieces(BLUE) === 0) {
-      finishGame("คอมพิวเตอร์ชนะ · หมากสีน้ำเงินหมดแล้ว");
-      return;
-    }
-
-    if (countPieces(RED) === 0) {
-      finishGame("คุณชนะ! · หมากสีแดงหมดแล้ว");
-      return;
-    }
-
-    turn = turn === BLUE ? RED : BLUE;
-
-    const availableMoves = getAllMoves(turn);
-
-    if (!availableMoves.length) {
-      finishGame(
-        turn === BLUE
-          ? "คอมพิวเตอร์ชนะ · คุณเดินต่อไม่ได้"
-          : "คุณชนะ! · คอมพิวเตอร์เดินต่อไม่ได้"
-      );
-      return;
-    }
-
-    render();
-
-    if (turn === RED) {
-      setStatus("คอมพิวเตอร์กำลังคิดแผน...");
-      computerTimer = setTimeout(computerMove, 500);
-    } else {
-      const mustCapture = availableMoves.some(move => move.capture);
-      setStatus(
-        mustCapture
-          ? "ตาคุณ · ต้องกินหมากสีแดง"
-          : "ตาคุณ · เลือกหมากสีน้ำเงินเพื่อเดิน"
-      );
-    }
-  }
-
-  function continueCaptureOrSwitch(position) {
-    const nextCaptures = getPieceMoves(position.row, position.col, true)
-      .filter(move => move.capture);
-
-    if (nextCaptures.length > 0) {
-      selected = { ...position };
-      forcedPiece = { ...position };
-      setStatus("ต้องกินต่อด้วยหมากตัวเดิม");
-      render();
-      return;
-    }
-
-    switchTurn();
-  }
-
-  function handleSquareClick(row, col) {
-    if (gameOver || turn !== BLUE) return;
-
-    const selectedMoves = getSelectedMoves();
-    const chosenMove = selectedMoves.find(
-      move => move.to.row === row && move.to.col === col
-    );
-
-    if (chosenMove) {
-      makeMove(chosenMove);
-
-      if (chosenMove.capture) {
-        continueCaptureOrSwitch(chosenMove.to);
-      } else {
-        switchTurn();
-      }
-      return;
-    }
-
-    if (forcedPiece) {
-      setStatus("ต้องกินต่อด้วยหมากตัวเดิม");
-      return;
-    }
-
-    const piece = board[row][col];
-
-    if (piece?.color === BLUE) {
-      const availableMoves = getAllMoves(BLUE);
-      const movesForPiece = availableMoves.filter(
-        move => move.from.row === row && move.from.col === col
-      );
-
-      if (!movesForPiece.length) {
-        setStatus("หมากตัวนี้เดินไม่ได้");
-        return;
-      }
-
-      selected = { row, col };
-
-      setStatus(
-        availableMoves.some(move => move.capture)
-          ? "เลือกช่องเพื่อกินหมากสีแดง"
-          : "เลือกช่องที่ต้องการเดิน"
-      );
-
-      render();
-    }
-  }
-
-  function evaluateBoard() {
-    let score = 0;
-    for (let r = 0; r < SIZE; r++) {
-      for (let c = 0; c < SIZE; c++) {
-        const p = board[r][c];
-        if (!p) continue;
-        
-        let val = 10;
-        if (p.king) val = 25;
-
-        if (p.color === RED) {
-          score += val + (r * 1.5);
-        } else {
-          score -= val + ((7 - r) * 1.5);
-        }
-      }
-    }
-    return score;
-  }
-
-  function scoreComputerMove(move) {
-    let score = 0;
-
-    const fromPiece = board[move.from.row][move.from.col];
-    const targetPiece = board[move.to.row][move.to.col];
-    let capturedPiece = null;
-
-    board[move.to.row][move.to.col] = fromPiece;
-    board[move.from.row][move.from.col] = null;
-
-    if (move.capture) {
-      capturedPiece = board[move.capture.row][move.capture.col];
-      board[move.capture.row][move.capture.col] = null;
-      score += 150;
-      if (capturedPiece && capturedPiece.king) score += 50;
-    }
-
-    if (!fromPiece.king && move.to.row === SIZE - 1) {
-      score += 80;
-    }
-
-    if (move.to.col >= 2 && move.to.col <= 5) {
-      score += 10;
-    }
-
-    let unsafe = false;
-    outer: for (let r = 0; r < SIZE; r++) {
-      for (let c = 0; c < SIZE; c++) {
-        if (board[r][c]?.color === BLUE) {
-          const enemyCaptures = getPieceMoves(r, c, true);
-          if (enemyCaptures.some(ec => ec.capture.row === move.to.row && ec.capture.col === move.to.col)) {
-            unsafe = true;
-            break outer;
-          }
-        }
-      }
-    }
-
-    if (unsafe && !move.capture) {
-      score -= 120;
-    }
-
-    score += evaluateBoard() * 0.5;
-
-    board[move.from.row][move.from.col] = fromPiece;
-    board[move.to.row][move.to.col] = targetPiece;
-    if (move.capture) {
-      board[move.capture.row][move.capture.col] = capturedPiece;
-    }
-
-    return score;
-  }
-
-  function computerMove() {
-    if (gameOver || turn !== RED) return;
-
-    const moves = getAllMoves(RED);
-
-    if (!moves.length) {
-      finishGame("คุณชนะ! · คอมพิวเตอร์เดินต่อไม่ได้");
-      return;
-    }
-
-    const scoredMoves = moves.map(item => ({ item, score: scoreComputerMove(item) }));
-    scoredMoves.sort((a, b) => b.score - a.score);
-
-    const bestScore = scoredMoves[0].score;
-    const bestMoves = scoredMoves.filter(m => Math.abs(m.score - bestScore) < 5);
-    const chosen = bestMoves[Math.floor(Math.random() * bestMoves.length)].item;
-
-    makeMove(chosen);
-    render();
-
-    if (chosen.capture) {
-      computerTimer = setTimeout(
-        () => computerContinueCapture(chosen.to),
-        400
-      );
-    } else {
-      computerTimer = setTimeout(switchTurn, 350);
-    }
-  }
-
-  function computerContinueCapture(position) {
-    if (gameOver || turn !== RED) return;
-
-    const captures = getPieceMoves(position.row, position.col, true)
-      .filter(move => move.capture);
-
-    if (!captures.length) {
-      switchTurn();
-      return;
-    }
-
-    const move = captures[Math.floor(Math.random() * captures.length)];
-
-    makeMove(move);
-    render();
-
-    computerTimer = setTimeout(
-      () => computerContinueCapture(move.to),
-      400
-    );
-  }
-
-  function render() {
-    const validMoves = getSelectedMoves();
-
-    boardEl.innerHTML = "";
-
-    for (let row = 0; row < SIZE; row++) {
-      for (let col = 0; col < SIZE; col++) {
-        const square = document.createElement("button");
-        const piece = board[row][col];
-
-        square.type = "button";
-        square.className = `square ${isDarkSquare(row, col) ? "dark" : "light"}`;
-        square.dataset.row = row;
-        square.dataset.col = col;
-
-        if (samePosition(selected, { row, col })) {
-          square.classList.add("selected");
-        }
-
-        if (
-          validMoves.some(
-            move => move.to.row === row && move.to.col === col
-          )
-        ) {
-          square.classList.add("valid-move");
-        }
-
-        if (piece) {
-          const checker = document.createElement("span");
-          checker.className = `piece ${piece.color}`;
-
-          if (piece.king) {
-            checker.classList.add("king");
-            checker.textContent = "👑"; // แสดงมงกุฎเดี่ยวๆ ตรงกลางพอดีสวยงาม
-          }
-
-          square.appendChild(checker);
-        }
-
-        square.addEventListener("click", () => handleSquareClick(row, col));
-        boardEl.appendChild(square);
-      }
-    }
-
-    blueCountEl.textContent = countPieces(BLUE);
-    redCountEl.textContent = countPieces(RED);
-  }
-
-  resetButton.addEventListener("click", newGame);
-
-  newGame();
-})();
+/* ลายไม้ช่องกระดาน */
+.light {
+    background-color: #EED9C4;
+    box-shadow: inset 0 0 4px rgba(0,0,0,0.1);
+}
+
+.dark {
+    background-color: #96613D;
+    box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+}
+
+/* ช่องที่เลือกหรือเดินได้ */
+.square.selected {
+    background-color: #f1c40f !important;
+}
+
+.square.valid-move::after {
+    content: '';
+    width: 22%;
+    height: 22%;
+    background-color: rgba(46, 204, 113, 0.9);
+    border-radius: 50%;
+    box-shadow: 0 0 8px #2ecc71;
+}
+
+/* ตัวหมาก 3D นูนมีมิติ ควบคุมขนาดให้พอดีเป๊ะ */
+.piece {
+    width: 78%;
+    height: 78%;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem; /* ปรับขนาดไอคอนมงกุฎให้เล็กลงพอดีสวยงาม ไม่ดันช่อง */
+    line-height: 1;
+    box-shadow: 0 5px 10px rgba(0,0,0,0.4), inset 0 3px 5px rgba(255,255,255,0.5), inset 0 -3px 5px rgba(0,0,0,0.4);
+    user-select: none;
+    position: relative;
+    box-sizing: border-box;
+}
+
+/* หมากน้ำเงิน (ผู้เล่น) */
+.piece.blue {
+    background: radial-gradient(circle at 30% 30%, #54a0ff, #2e86de);
+    border: 2px solid #1b4f72;
+}
+
+/* หมากแดง (คอมพิวเตอร์) */
+.piece.red {
+    background: radial-gradient(circle at 30% 30%, #ff6b6b, #ee5253);
+    border: 2px solid #78281f;
+}
+
+/* ปุ่มเริ่มเกมใหม่ */
+#resetButton {
+    margin-top: 15px;
+    padding: 10px 24px;
+    font-size: 1rem;
+    font-weight: bold;
+    background-color: #e67e22;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+#resetButton:active {
+    transform: scale(0.96);
+}
