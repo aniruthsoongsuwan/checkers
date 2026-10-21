@@ -17,31 +17,43 @@
   let forcedPiece = null;
   let gameOver = false;
   let computerTimer = null;
+  let audioCtx = null;
 
-  // --- ระบบเสียงเอฟเฟกต์ตอนเดินและกินหมาก ---
+  // --- ระบบเสียงเอฟเฟกต์ (รองรับการปลดล็อกเสียงบนมือถือ) ---
+  function initAudio() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+  }
+
   function playSound(type) {
     try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
+      initAudio();
+      if (!audioCtx) return;
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
       osc.connect(gain);
-      gain.connect(ctx.destination);
+      gain.connect(audioCtx.destination);
 
       if (type === 'capture') {
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(150, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.15);
-        gain.gain.setValueAtTime(0.3, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
         osc.start();
-        osc.stop(ctx.currentTime + 0.15);
+        osc.stop(audioCtx.currentTime + 0.15);
       } else if (type === 'move') {
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(300, ctx.currentTime);
-        gain.gain.setValueAtTime(0.1, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
+        osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
         osc.start();
-        osc.stop(ctx.currentTime + 0.08);
+        osc.stop(audioCtx.currentTime + 0.08);
       }
     } catch (e) {}
   }
@@ -68,6 +80,7 @@
 
   function newGame() {
     clearTimeout(computerTimer);
+    initAudio(); // ปลดล็อกเสียงตอนเริ่มเกมใหม่
 
     board = createEmptyBoard();
     turn = BLUE;
@@ -281,6 +294,7 @@
   }
 
   function handleSquareClick(row, col) {
+    initAudio(); // ปลดล็อกเสียงทันทีที่ผู้เล่นแตะหน้าจอ
     if (gameOver || turn !== BLUE) return;
 
     const selectedMoves = getSelectedMoves();
