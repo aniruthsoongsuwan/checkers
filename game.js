@@ -46,6 +46,22 @@
     } catch (e) {}
   }
 
+  // ปรับแต่งสไตล์การแสดงผลของมงกุฎให้พอดีสวยงาม ไม่ดันช่องเพี้ยน
+  const styleSheet = document.createElement("style");
+  styleSheet.innerText = `
+.piece.king {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    line-height: 1;
+}
+.piece.king::before {
+    content: none !important;
+}`;
+  document.head.appendChild(styleSheet);
+  // ---------------------------------
+
   function isDarkSquare(row, col) {
     return (row + col) % 2 === 1;
   }
@@ -329,7 +345,6 @@
     }
   }
 
-  // --- สมองกล AI ระดับอัจฉริยะ (Smart AI Evaluation) ---
   function evaluateBoard() {
     let score = 0;
     for (let r = 0; r < SIZE; r++) {
@@ -338,9 +353,8 @@
         if (!p) continue;
         
         let val = 10;
-        if (p.king) val = 25; // ให้คุณค่าหมากฮอสสูงมาก
+        if (p.king) val = 25;
 
-        // AI (RED) เดินหน้าลงล่าง ยิ่งแถวเยอะยิ่งได้เปรียบ (เข้าใกล้ฮอส)
         if (p.color === RED) {
           score += val + (r * 1.5);
         } else {
@@ -354,7 +368,6 @@
   function scoreComputerMove(move) {
     let score = 0;
 
-    // จำลองการเดินจริงบนกระดานชั่วคราว
     const fromPiece = board[move.from.row][move.from.col];
     const targetPiece = board[move.to.row][move.to.col];
     let capturedPiece = null;
@@ -365,21 +378,18 @@
     if (move.capture) {
       capturedPiece = board[move.capture.row][move.capture.col];
       board[move.capture.row][move.capture.col] = null;
-      score += 150; // ให้คะแนนสูงมากเมื่อมีการกินหมาก
-      if (capturedPiece && capturedPiece.king) score += 50; // โบนัสกินฮอสผู้เล่น
+      score += 150;
+      if (capturedPiece && capturedPiece.king) score += 50;
     }
 
-    // ถ้าเดินแล้วได้เป็นฮอส รับโบนัสทันที
     if (!fromPiece.king && move.to.row === SIZE - 1) {
       score += 80;
     }
 
-    // คุมพื้นที่ตรงกลางกระดาน
     if (move.to.col >= 2 && move.to.col <= 5) {
       score += 10;
     }
 
-    // เช็คความปลอดภัยหลังเดิน: ตาต่อไปผู้เล่นจะกินคืนได้ไหม?
     let unsafe = false;
     outer: for (let r = 0; r < SIZE; r++) {
       for (let c = 0; c < SIZE; c++) {
@@ -394,13 +404,11 @@
     }
 
     if (unsafe && !move.capture) {
-      score -= 120; // ลงโทษหนักถ้าเดินไปให้เขากินฟรีโดยไม่ได้กินกลับ
+      score -= 120;
     }
 
-    // ประเมินภาพรวมกระดานคร่าวๆ เพิ่มเติม
     score += evaluateBoard() * 0.5;
 
-    // คืนค่ากระดานกลับเหมือนเดิม
     board[move.from.row][move.from.col] = fromPiece;
     board[move.to.row][move.to.col] = targetPiece;
     if (move.capture) {
@@ -420,11 +428,9 @@
       return;
     }
 
-    // จัดลำดับตาเดินตามคะแนนความฉลาด
     const scoredMoves = moves.map(item => ({ item, score: scoreComputerMove(item) }));
     scoredMoves.sort((a, b) => b.score - a.score);
 
-    // เลือกตาเดินที่ดีที่สุด (หากคะแนนเท่ากันสุ่มเลือกนิดหน่อยเพื่อความหลากหลาย)
     const bestScore = scoredMoves[0].score;
     const bestMoves = scoredMoves.filter(m => Math.abs(m.score - bestScore) < 5);
     const chosen = bestMoves[Math.floor(Math.random() * bestMoves.length)].item;
@@ -497,7 +503,7 @@
 
           if (piece.king) {
             checker.classList.add("king");
-            checker.textContent = "♛";
+            checker.textContent = "👑"; // แสดงมงกุฎเดี่ยวๆ ตรงกลางพอดีสวยงาม
           }
 
           square.appendChild(checker);
