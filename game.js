@@ -54,9 +54,61 @@
         gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
         osc.start();
         osc.stop(audioCtx.currentTime + 0.08);
+      } else if (type === 'start') {
+        // เสียงดนตรีต้อนรับตอนเริ่มเกม (เสียงใสๆ รัว 3 โน้ต)
+        const now = audioCtx.currentTime;
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(261.63, now); // Do
+        osc.frequency.setValueAtTime(329.63, now + 0.1); // Mi
+        osc.frequency.setValueAtTime(392.00, now + 0.2); // Sol
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+        osc.start(now);
+        osc.stop(now + 0.4);
       }
     } catch (e) {}
   }
+
+  // --- เอฟเฟกต์แบนเนอร์เด้งต้อนรับตอนกดเริ่มเกม ---
+  const styleSheet = document.createElement("style");
+  styleSheet.innerText = `
+@keyframes bounceIn {
+    0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
+    50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+    70% { transform: translate(-50%, -50%) scale(0.95); }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}`;
+  document.head.appendChild(styleSheet);
+
+  function showStartEffect() {
+    playSound('start');
+    const oldBanner = document.getElementById('startBanner');
+    if (oldBanner) oldBanner.remove();
+
+    const banner = document.createElement('div');
+    banner.id = 'startBanner';
+    banner.innerHTML = '🎉 เริ่มเกมใหม่แล้ว! ลุยกันเลย สู้ๆ! 👑';
+    banner.style.position = 'fixed';
+    banner.style.top = '18%';
+    banner.style.left = '50%';
+    banner.style.transform = 'translate(-50%, -50%)';
+    banner.style.background = 'linear-gradient(135deg, #f39c12, #d35400)';
+    banner.style.color = '#fff';
+    banner.style.padding = '12px 24px';
+    banner.style.borderRadius = '25px';
+    banner.style.fontSize = '1.1rem';
+    banner.style.fontWeight = 'bold';
+    banner.style.boxShadow = '0 10px 25px rgba(0,0,0,0.5)';
+    banner.style.zIndex = '1000';
+    banner.style.textAlign = 'center';
+    banner.style.animation = 'bounceIn 0.8s ease-out forwards';
+
+    document.body.appendChild(banner);
+    setTimeout(() => {
+      banner.remove();
+    }, 2000);
+  }
+  // ---------------------------------------------
 
   function isDarkSquare(row, col) {
     return (row + col) % 2 === 1;
@@ -80,7 +132,7 @@
 
   function newGame() {
     clearTimeout(computerTimer);
-    initAudio(); // ปลดล็อกเสียงตอนเริ่มเกมใหม่
+    initAudio();
 
     board = createEmptyBoard();
     turn = BLUE;
@@ -106,6 +158,7 @@
 
     setStatus("ตาคุณ · เลือกหมากสีน้ำเงินเพื่อเดิน");
     render();
+    showStartEffect(); // แสดงเสียงและเอฟเฟกต์เด้งต้อนรับตอนเริ่มเกม
   }
 
   function getDirections(piece) {
@@ -294,7 +347,7 @@
   }
 
   function handleSquareClick(row, col) {
-    initAudio(); // ปลดล็อกเสียงทันทีที่ผู้เล่นแตะหน้าจอ
+    initAudio();
     if (gameOver || turn !== BLUE) return;
 
     const selectedMoves = getSelectedMoves();
